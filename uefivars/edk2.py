@@ -107,7 +107,7 @@ class EDK2UEFIVarStore(UEFIVarStore):
             name = file.read(namelen).decode('utf-16le').rstrip('\0')
             data = file.read(datalen)
             if state == self.STATE_SETTLED:
-                if timestamp == b'\0' * 16:
+                if timestamp == self.EMPTY_TIMESTAMP:
                     timestamp = None
                 var = UEFIVar(name, data, guid, attr, timestamp, None)
                 if name == "certdb" and guid == self.GUID_CERTDB:

@@ -26,6 +26,9 @@ class UEFIVar(object):
         return var
 
 class UEFIVarStore(object):
+    EMPTY_TIMESTAMP = b'\0' * 16
+    EMPTY_DIGEST = b'\0' * 32
+
     def __init__(self):
         self.vars = []
 

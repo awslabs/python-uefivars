@@ -58,7 +58,11 @@ class AWSUEFIVarStore(UEFIVarStore):
             attr = raw.read32()
             if attr & self.EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS:
                 timestamp = raw.readtimestamp()
+                if timestamp == self.EMPTY_TIMESTAMP:
+                    timestamp = None
                 digest = raw.readdata()
+                if digest == self.EMPTY_DIGEST:
+                    digest = None
                 self.vars.append(UEFIVar(name, data, guid, attr, timestamp, digest))
             else:
                 self.vars.append(UEFIVar(name, data, guid, attr))
@@ -73,8 +77,16 @@ class AWSUEFIVarStore(UEFIVarStore):
             raw.writeguid(var.guid)
             raw.write32(var.attr)
             if var.attr & self.EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS:
-                raw.writetimestamp(var.timestamp)
-                raw.writedata(var.digest)
+                timestamp = var.timestamp
+                if timestamp == None:
+                    timestamp = self.EMPTY_TIMESTAMP
+
+                digest = var.digest
+                if digest == None:
+                    digest = self.EMPTY_DIGEST
+
+                raw.writetimestamp(timestamp)
+                raw.writedata(digest)
         raw.file.seek(0, os.SEEK_SET)
 
         enc = zlib.compressobj(9, zdict=UEFIVarStoreV0.dict)
