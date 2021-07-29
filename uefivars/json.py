@@ -15,9 +15,9 @@ class JSONVar(UEFIVar):
         attr = int(jvar['attr'])
         timestamp = None
         digest = None
-        if jvar['timestamp']:
+        if 'timestamp' in jvar:
             timestamp = bytes.fromhex(jvar['timestamp'])
-        if jvar['digest']:
+        if 'digest' in jvar:
             digest = bytes.fromhex(jvar['digest'])
         super().__init__(name, data, guid, attr, timestamp, digest)
 
@@ -35,13 +35,15 @@ class JSONEncoder(json.JSONEncoder):
 
 class JSONUEFIVarStore(UEFIVarStore):
     def __init__(self, data):
+        super().__init__()
+
         # Read the JSON file
         jsondec = json.JSONDecoder()
-        json = jsondec.decode(f.read())
+        jdata = jsondec.decode(data.decode('utf-8'))
 
         # Copy all JSON elements to the store
-        for jvar in json:
-            self.vars.append(JSONVar(jvar).var)
+        for jvar in jdata:
+            self.vars.append(JSONVar(jvar))
 
     def __bytes__(self):
         return self.__str__().encode('utf-8')
