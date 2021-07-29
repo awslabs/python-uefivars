@@ -27,7 +27,7 @@ args = parser.parse_args()
 if args.inputfile:
     infile = open(args.inputfile, "rb")
 else:
-    infile = sys.stdin
+    infile = sys.stdin.buffer
 indata = infile.read()
 
 inclass = Str2UEFIVarStore(args.input)
