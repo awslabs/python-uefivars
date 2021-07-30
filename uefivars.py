@@ -18,8 +18,8 @@ def Str2UEFIVarStore(s):
         raise('Unknown Input type "%s", choose from ("aws, "json")' % s)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--input", help='Input type ("aws", "json")', required=True)
-parser.add_argument("-o", "--output", help='Output type ("aws", "json")', required=True)
+parser.add_argument("-i", "--input", help='Input type ("aws", "json", "edk2")', required=True)
+parser.add_argument("-o", "--output", help='Output type ("aws", "json", "edk2")', required=True)
 parser.add_argument("-I", "--inputfile", help='Input file (stdin if not given)')
 parser.add_argument("-O", "--outputfile", help='Output file (stdout if not given)')
 args = parser.parse_args()
