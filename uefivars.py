@@ -14,13 +14,15 @@ def Str2UEFIVarStore(s):
         return EDK2UEFIVarStore
     elif s == 'json':
         return JSONUEFIVarStore
+    elif s == 'none':
+        return UEFIVarStore
     else:
         raise SystemExit(
-            'Unknown Input type "{}", choose from ("aws, "json", "edk2")'.format(s)
+            'Unknown Input type "{}", choose from ("aws, "json", "edk2", "none")'.format(s)
         )
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--input", help='Input type ("aws", "json", "edk2")', required=True)
+parser.add_argument("-i", "--input", help='Input type ("aws", "json", "edk2", "none")', required=True)
 parser.add_argument("-o", "--output", help='Output type ("aws", "json", "edk2")', required=True)
 parser.add_argument("-I", "--inputfile", help='Input file (stdin if not given)')
 parser.add_argument("-O", "--outputfile", help='Output file (stdout if not given)')
@@ -29,13 +31,16 @@ args = parser.parse_args()
 inclass = Str2UEFIVarStore(args.input)
 outclass = Str2UEFIVarStore(args.output)
 
-if args.inputfile:
-    infile = open(args.inputfile, "rb")
+if args.input == 'none':
+    indata = ''
 else:
-    infile = sys.stdin.buffer
-    print("Reading uefivars from stdin", file=sys.stderr)
+    if args.inputfile:
+        infile = open(args.inputfile, "rb")
+    else:
+        infile = sys.stdin.buffer
+        print("Reading uefivars from stdin", file=sys.stderr)
 
-indata = infile.read()
+    indata = infile.read()
 
 varstore = inclass(indata)
 varstore.__class__ = outclass

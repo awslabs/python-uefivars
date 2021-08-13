@@ -3,6 +3,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT
 
+import sys
+
 class UEFIVar(object):
     def __init__(self, name: str, data: bytes, guid: bytes, attr: int, timestamp: bytes = None, digest: bytes = None):
         self.name = name
@@ -29,11 +31,12 @@ class UEFIVarStore(object):
     EMPTY_TIMESTAMP = b'\0' * 16
     EMPTY_DIGEST = b'\0' * 32
 
-    def __init__(self):
+    def __init__(self, data=''):
         self.vars = []
 
     def __dict__(self):
         return self.vars
 
     def __bytes__(self):
-        raise("This backend does not implement writing the variable store")
+        print("This output backend does not implement writing the variable store", file=sys.stderr)
+        sys.exit()
