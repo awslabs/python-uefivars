@@ -15,7 +15,9 @@ def Str2UEFIVarStore(s):
     elif s == 'json':
         return JSONUEFIVarStore
     else:
-        raise('Unknown Input type "%s", choose from ("aws, "json")' % s)
+        raise SystemExit(
+            'Unknown Input type "{}", choose from ("aws, "json", "edk2")'.format(s)
+        )
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help='Input type ("aws", "json", "edk2")', required=True)
@@ -24,14 +26,16 @@ parser.add_argument("-I", "--inputfile", help='Input file (stdin if not given)')
 parser.add_argument("-O", "--outputfile", help='Output file (stdout if not given)')
 args = parser.parse_args()
 
+inclass = Str2UEFIVarStore(args.input)
+outclass = Str2UEFIVarStore(args.output)
+
 if args.inputfile:
     infile = open(args.inputfile, "rb")
 else:
     infile = sys.stdin.buffer
-indata = infile.read()
+    print("Reading uefivars from stdin", file=sys.stderr)
 
-inclass = Str2UEFIVarStore(args.input)
-outclass = Str2UEFIVarStore(args.output)
+indata = infile.read()
 
 varstore = inclass(indata)
 varstore.__class__ = outclass
