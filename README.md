@@ -44,6 +44,11 @@ into edk2 format:
 $ uefivars -i json -o edk2 -I vars.json -O OVMF_VARS.fd
 ```
 
+Given any variable store (including an empty one) the `--PK` , `--KEK` , `--db` and `--dbx`
+switches can be used to (over-)write the four SecureBoot variables from input files.
+(Usually .esl files). For a general rundown of the key generation process the [ArchLinux](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Creating_keys) wiki has proven itself
+as a first point of guidance.
+
 You can also use the tool to convert between the AWS EC2 uefi-data format
 and edk2 to import and export UEFI variable stores between an EC2 instance
 and QEMU:
