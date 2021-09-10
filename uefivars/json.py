@@ -3,15 +3,17 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT
 
+import base64
 import json
+import uuid
 from .varstore import *
 
 class JSONVar(UEFIVar):
     def __init__(self, jvar):
         var = {}
         name = jvar['name']
-        data = bytes.fromhex(jvar['data'])
-        guid = bytes.fromhex(jvar['guid'])
+        data = base64.b64decode(jvar['data'])
+        guid = uuid.UUID(jvar['guid']).bytes_le
         attr = int(jvar['attr'])
         timestamp = None
         digest = None
@@ -48,6 +50,12 @@ class JSONUEFIVarStore(UEFIVarStore):
     def __bytes__(self):
         return self.__str__().encode('utf-8')
 
+    def prepare(self, var):
+        var.data = base64.b64encode(var.data).decode('ascii')
+        var.guid = str(uuid.UUID(bytes_le=var.guid))
+        return var
+
     def __str__(self):
+        vars = list(map(self.prepare, self.vars))
         jsonenc = JSONEncoder(indent=4, separators=(',', ': '))
-        return jsonenc.encode(self.vars)
+        return jsonenc.encode(vars)

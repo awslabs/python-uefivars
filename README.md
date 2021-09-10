@@ -26,12 +26,10 @@ present in the variable store.
 $ uefivars -i edk2 -o json -I OVMF_VARS.secboot.fd
 [
     {
-        "name": "certdb",
-        "data": "04 00 00 00",
-        "guid": "6e e5 be d9 dc 75 d9 49 b4 d7 b5 34 21 0f 63 7a",
-        "attr": 39,
-        "timestamp": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
-        "digest": ""
+        "name": "SecureBootEnable",
+        "data": "AQ==",
+        "guid": "f0a30bc7-af08-4556-99c4-001009c93a44",
+        "attr": 3
     },
     [...]
 ]
