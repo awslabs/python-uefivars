@@ -258,7 +258,7 @@ class EDK2UEFIVarStore(UEFIVarStore):
                          self.EFI_FVB2_WRITE_LOCK_STATUS  | \
                          self.EFI_FVB2_ALIGNMENT_16
         if not hasattr(self, 'varsize'):
-            self.varsize = 0x3ffb8
+            self.varsize = int(self.filelen / 2) - 8264
 
         # Assemble the flash file
         raw = AWSVarStoreFile(tempfile.SpooledTemporaryFile())
