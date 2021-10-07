@@ -48,7 +48,7 @@ dbx_found = -1
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help='Input type ("aws", "json", "edk2", "none")', required=True)
-parser.add_argument("-o", "--output", help='Output type ("aws", "json", "edk2")', required=True)
+parser.add_argument("-o", "--output", help='Output type ("aws", "json", "edk2[,filesize=512]")', required=True)
 parser.add_argument("-I", "--inputfile", help='Input file (stdin if not given)')
 parser.add_argument("-O", "--outputfile", help='Output file (stdout if not given)')
 parser.add_argument("-P", "--PK", help='Insert PK from given file (usually PK.esl)')
@@ -59,6 +59,11 @@ parser.add_argument("-x", "--dbx", help='Insert dbx from given file (usually dbx
 args = parser.parse_args()
 
 inclass = Str2UEFIVarStore(args.input)
+
+args.output = [s.strip() for s in args.output.split(",")]
+output_options = args.output[1:]
+args.output = args.output[0]
+
 outclass = Str2UEFIVarStore(args.output)
 
 if args.input == 'none':
@@ -128,6 +133,8 @@ if (args.dbx):
 
 # convert the format by changing the output class
 varstore.__class__ = outclass
+if output_options:
+    varstore.set_output_options(output_options)
 
 if args.outputfile:
     outfile = open(args.outputfile, "wb")

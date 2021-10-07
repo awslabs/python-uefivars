@@ -298,3 +298,16 @@ class EDK2UEFIVarStore(UEFIVarStore):
 
         raw.file.seek(0, os.SEEK_SET)
         return raw.file.read()
+
+    def set_output_options(self, options):
+        for option in [option.strip().split("=") for option in options]:
+            if option[0] == 'filesize':
+                if(len(option) != 2 or not option[1]):
+                    raise SystemExit(
+                        'option "filesize" requires a second argument'
+                    )
+                self.filelen = int(option[1]) * 1024
+            else:
+                raise SystemExit(
+                    'Unknown Option type "{}"'.format(option)
+                )

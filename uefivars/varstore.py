@@ -40,3 +40,7 @@ class UEFIVarStore(object):
     def __bytes__(self):
         print("This output backend does not implement writing the variable store", file=sys.stderr)
         sys.exit()
+
+    def set_output_options(self, options):
+        print("This output backend does not implement output options: {}".format(options), file=sys.stderr)
+        sys.exit()
