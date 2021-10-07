@@ -36,15 +36,28 @@ class JSONEncoder(json.JSONEncoder):
             return o.__dict__()
 
 class JSONUEFIVarStore(UEFIVarStore):
+    current_version = 2
+
     def __init__(self, data):
         super().__init__()
 
         # Read the JSON file
-        jsondec = json.JSONDecoder()
-        jdata = jsondec.decode(data.decode('utf-8'))
+        jdata = json.decode(data.decode('utf-8'))
+        vardata = []
+        if isinstance(jdata, list):
+            self.version = 1
+            vardata = jdata
+        else:
+            self.version = jdata.get('version', self.current_version)
+            vardata = jdata.get('variables', [])
+
+        if self.version > self.current_version:
+            raise SystemExit(
+                'Unknown Version "{}", this tool only supports up to version "{}"'.format(self.version, self.current_version)
+            )
 
         # Copy all JSON elements to the store
-        for jvar in jdata:
+        for jvar in vardata:
             self.vars.append(JSONVar(jvar))
 
     def __bytes__(self):
@@ -57,5 +70,8 @@ class JSONUEFIVarStore(UEFIVarStore):
 
     def __str__(self):
         vars = list(map(self.prepare, self.vars))
-        jsonenc = JSONEncoder(indent=4, separators=(',', ': '))
-        return jsonenc.encode(vars)
+        store = {
+            "version": self.current_version,
+            "variables": self.vars,
+        }
+        return json.dumps(store, indent=4)

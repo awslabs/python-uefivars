@@ -104,7 +104,6 @@ if (args.PK):
     else:
         varstore.vars.append(var)
 elif (pk_found == -1):
-    print(pk_found, file=sys.stderr)
     print('No PK (PlatformKey) was set; SecureBoot will not be enabled without a PK', file=sys.stderr)
 
 if (args.KEK):
