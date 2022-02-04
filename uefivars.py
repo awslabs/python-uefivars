@@ -7,6 +7,10 @@ import argparse
 import sys
 from uefivars import *
 
+MIN_PYTHON = (3, 0)
+if sys.version_info < MIN_PYTHON:
+    sys.exit("Python %s.%s or later is required.\n" % MIN_PYTHON)
+
 globalEfiGUID = bytes.fromhex("61 df e4 8b ca 93 d2 11 aa 0d 00 e0 98 03 2b 8c")
 secureDatabaseGUID = bytes.fromhex("cb b2 19 d7 3a 3d 96 45 a3 bc da d0 0e 67 65 6f")
 
