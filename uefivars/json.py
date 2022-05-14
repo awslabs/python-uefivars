@@ -3,7 +3,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT
 
-import base64
 import json
 import uuid
 from .varstore import *

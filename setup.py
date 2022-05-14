@@ -17,7 +17,6 @@ setuptools.setup(
     long_description=long_description,
     url="https://github.com/awslabs/python-uefivars",
     packages=setuptools.find_packages(),
-    install_requires=[ 'crc32c' ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

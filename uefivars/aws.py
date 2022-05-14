@@ -3,12 +3,10 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT
 
-import json
 import os
 import zlib
 import base64
 import tempfile
-import crc32c
 from .varstore import *
 from .aws_v0 import *
 from .aws_file import *
@@ -32,9 +30,9 @@ class AWSUEFIVarStore(UEFIVarStore):
             raise Exception("Invalid magic. Expected AMZNUEFI. Found 0x%x" % magic);
         crc32 = file.read32()
 
-        # Validate crc32c
+        # Validate crc32
         location = file.file.tell()
-        comp_crc32 = crc32c.crc32(file.readall())
+        comp_crc32 = zlib.crc32(file.readall())
         if (comp_crc32 != crc32):
             raise Exception("Invalid checksum, please check you copied all data")
         file.file.seek(location, os.SEEK_SET)
@@ -96,7 +94,7 @@ class AWSUEFIVarStore(UEFIVarStore):
         f = tempfile.SpooledTemporaryFile()
         f = AWSVarStoreFile(f)
         f.write64(self.AMZNUEFI)
-        f.write32(crc32c.crc32(int(0).to_bytes(4, byteorder='little') + zdata))
+        f.write32(zlib.crc32(int(0).to_bytes(4, byteorder='little') + zdata))
         f.write32(0) # Version 0
         f.write(zdata)
         f.file.seek(0, os.SEEK_SET)
