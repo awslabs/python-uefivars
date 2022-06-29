@@ -5,7 +5,7 @@
 
 import argparse
 import sys
-from uefivars import *
+from pyuefivars import *
 
 MIN_PYTHON = (3, 0)
 if sys.version_info < MIN_PYTHON:
