@@ -1,0 +1,20 @@
+name: uefivars
+version: git
+summary: Create a binary blob containing a pre-filled variable store
+description: |
+  Create a binary blob containing a pre-filled variable store
+base: core22
+confinement: strict
+source-code: https://github.com/awslabs/python-uefivars
+issues: https://github.com/awslabs/python-uefivars/issues
+
+parts:
+  uefivars:
+    plugin: python
+    source: .
+
+apps:
+  uefivars:
+    command: bin/uefivars.py
+    plugs:
+      - home
