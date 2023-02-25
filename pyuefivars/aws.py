@@ -8,7 +8,7 @@ import os
 import zlib
 import base64
 import tempfile
-import crc32c
+import google_crc32c as crc32c
 from .varstore import *
 from .aws_v0 import *
 from .aws_file import *
@@ -34,7 +34,7 @@ class AWSUEFIVarStore(UEFIVarStore):
 
         # Validate crc32c
         location = file.file.tell()
-        comp_crc32 = crc32c.crc32(file.readall())
+        comp_crc32 = crc32c.value(file.readall())
         if (comp_crc32 != crc32):
             raise Exception("Invalid checksum, please check you copied all data")
         file.file.seek(location, os.SEEK_SET)
@@ -96,7 +96,7 @@ class AWSUEFIVarStore(UEFIVarStore):
         f = tempfile.SpooledTemporaryFile()
         f = AWSVarStoreFile(f)
         f.write64(self.AMZNUEFI)
-        f.write32(crc32c.crc32(int(0).to_bytes(4, byteorder='little') + zdata))
+        f.write32(crc32c.value(int(0).to_bytes(4, byteorder='little') + zdata))
         f.write32(0) # Version 0
         f.write(zdata)
         f.file.seek(0, os.SEEK_SET)
