@@ -74,7 +74,7 @@ class EDK2UEFIVarStore(UEFIVarStore):
     GUID_VARSTORE = b'\x78\x2c\xf3\xaa\x7b\x94\x9a\x43\xa1\x80\x2e\x14\x4e\xc3\x77\x92'
     STATE_SETTLED = 0x3f
     VARSTORE_STATUS = b'\x5a\xfe\x00\x00\x00\x00\x00\x00'
-    DEFAULT_FILE_LEN = 540672
+    DEFAULT_LENGTH = 540672
     HEADER_LENGTH = 0x48
     EFI_FVB2_READ_DISABLED_CAP  = 0x00000001
     EFI_FVB2_READ_ENABLED_CAP   = 0x00000002
@@ -130,7 +130,6 @@ class EDK2UEFIVarStore(UEFIVarStore):
         super().__init__()
 
         self.certdb = EDK2CertDB()
-        self.filelen = len(data)
 
         # Get a streaming file object
         file = tempfile.SpooledTemporaryFile()
@@ -148,6 +147,8 @@ class EDK2UEFIVarStore(UEFIVarStore):
             raise Exception("Invalid GUID: %s" % fsguid)
 
         self.length = file.read64()
+        if self.length > len(data):
+            raise Exception("Invalid length: %s" % self.length)
 
         sig = file.read(4)
         if sig != b'_FVH':
@@ -238,8 +239,8 @@ class EDK2UEFIVarStore(UEFIVarStore):
     def __bytes__(self) -> bytes:
         if not hasattr(self, 'certdb'):
             self.certdb = EDK2CertDB()
-        if not hasattr(self, 'filelen'):
-            self.filelen = self.DEFAULT_FILE_LEN
+        if not hasattr(self, 'length'):
+            self.length = self.DEFAULT_LENGTH
         if not hasattr(self, 'attrs'):
             self.attrs = self.EFI_FVB2_READ_DISABLED_CAP  | \
                          self.EFI_FVB2_READ_ENABLED_CAP   | \
@@ -258,13 +259,13 @@ class EDK2UEFIVarStore(UEFIVarStore):
                          self.EFI_FVB2_WRITE_LOCK_STATUS  | \
                          self.EFI_FVB2_ALIGNMENT_16
         if not hasattr(self, 'varsize'):
-            self.varsize = int(self.filelen / 2) - 8264
+            self.varsize = int(self.length / 2) - 8264
 
         # Assemble the flash file
         raw = AWSVarStoreFile(tempfile.SpooledTemporaryFile())
         raw.write(b'\0' * 16)
         raw.write(self.GUID_NVFS)
-        raw.write64(self.filelen)
+        raw.write64(self.length)
         raw.write(b'_FVH')
         raw.write32(self.attrs)
         raw.write16(self.HEADER_LENGTH)
@@ -283,11 +284,11 @@ class EDK2UEFIVarStore(UEFIVarStore):
         for var in self.vars:
             self.write_var(raw, var)
 
-        if raw.file.tell() > self.filelen:
+        if raw.file.tell() > self.length:
             raise Exception("Can not fit variables into store")
 
         # Expand to maximum file size
-        raw.file.seek(self.filelen - 1, os.SEEK_SET)
+        raw.file.seek(self.length - 1, os.SEEK_SET)
         raw.write8(0)
 
         # Calculate checksums
@@ -306,7 +307,7 @@ class EDK2UEFIVarStore(UEFIVarStore):
                     raise SystemExit(
                         'option "filesize" requires a second argument'
                     )
-                self.filelen = int(option[1]) * 1024
+                self.length = int(option[1]) * 1024
             else:
                 raise SystemExit(
                     'Unknown Option type "{}"'.format(option)
