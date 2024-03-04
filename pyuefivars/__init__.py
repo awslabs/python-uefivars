@@ -9,6 +9,7 @@ from .varstore import *
 from .aws import AWSUEFIVarStore
 from .edk2 import EDK2UEFIVarStore
 from .json import JSONUEFIVarStore
+from .efivarfs import EFIVARFSUEFIVarStore
 
 
 MIN_PYTHON = (3, 0)
@@ -25,11 +26,13 @@ def Str2UEFIVarStore(s):
         return EDK2UEFIVarStore
     elif s == 'json':
         return JSONUEFIVarStore
+    elif s == 'efivarfs':
+        return EFIVARFSUEFIVarStore
     elif s == 'none':
         return UEFIVarStore
     else:
         raise SystemExit(
-            'Unknown Input type "{}", choose from ("aws, "json", "edk2", "none")'.format(s)
+            'Unknown Input type "{}", choose from ("aws, "json", "edk2", "efivarfs", "none")'.format(s)
         )
 
 def ReadVar(arg, name, guid):
@@ -52,7 +55,7 @@ def ReadVar(arg, name, guid):
 
 def _parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", help='Input type ("aws", "json", "edk2", "none")', required=True)
+    parser.add_argument("-i", "--input", help='Input type ("aws", "json", "edk2", "efivarfs", "none")', required=True)
     parser.add_argument("-o", "--output", help='Output type ("aws", "json", "edk2[,filesize=512]")', required=True)
     parser.add_argument("-I", "--inputfile", help='Input file (stdin if not given)')
     parser.add_argument("-O", "--outputfile", help='Output file (stdout if not given)')
@@ -82,6 +85,8 @@ def main():
 
     if args.input == 'none':
         indata = ''
+    elif args.input == 'efivarfs':
+        indata = args.inputfile
     else:
         if args.inputfile:
             infile = open(args.inputfile, "rb")
