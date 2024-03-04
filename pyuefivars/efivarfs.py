@@ -7,6 +7,8 @@ import os
 from .varstore import *
 import uuid
 
+EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS = 0x20
+
 class EFIVARFSUEFIVarStore(UEFIVarStore):
     """
     Varstore class to ingest an efivarfs directory as UEFI variables.
@@ -46,6 +48,12 @@ class EFIVARFSUEFIVarStore(UEFIVarStore):
             content = open(os.path.join(path, var_name), 'rb').read()
             data = content[4:]
             attr = int.from_bytes(content[:4], "little")
+
+            # UEFI Secure Boot variables are special; they contain hidden
+            # key material that we can not extract from efivarfs. Skip them.
+            if attr & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS:
+                print(f'Skipping authenticated variable "{var_name}"', file=sys.stderr)
+                continue
 
             # Now that we reassembled everything, remember the variable
             self.vars.append(UEFIVar(name, data, guid, attr))
