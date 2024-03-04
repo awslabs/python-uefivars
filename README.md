@@ -59,6 +59,25 @@ $ uefivars -i edk2 -o aws -I OVMF_VARS.fd -O uefi-data.aws
 $ uefivars -i aws -o edk2 -I uefi-data.aws -O OVMF_VARS.fd
 ```
 
+## How can I take a snapshot of my current UEFI variable store?
+
+If you are running on a live UEFI system, the variable store that gets exposed
+to the Operating System is incomplete: It does not contain UEFI variables that
+are only present at boot time and it does not get access to variable
+authentication data.
+
+If you don't need either - for example because you're only interested in saving
+the boot order - you can use the efivarfs backend to convert the local variable
+store into a file:
+
+```console
+$ uefivars -i efivarfs -o aws -I /sys/firmware/efi/efivars -O uefi-data.aws
+```
+
 ## What formats are supported?
 
-This package currently supports the aws, edk2 and json file formats.
+This package currently supports the following formats:
+
+**aws** - File format used in [AWS EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/uefi-secure-boot.html)
+**edk2** - File format used for flash storage in [OVMF](https://github.com/tianocore/edk2/blob/918288ab5a7c3abe9c58d576ccc0ae32e2c7dea0/OvmfPkg/README#L123)
+**efivarfs** - Ingests all non-authenticated variables from an [efivarfs](https://docs.kernel.org/filesystems/efivarfs.html) mount point (read only)
