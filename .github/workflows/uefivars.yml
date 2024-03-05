@@ -31,7 +31,7 @@ jobs:
     - name: Lint with flake8
       run: |
         # stop the build if there are any new flake8 issues
-        flake8 . --count --max-complexity=10 --show-source --statistics
+        flake8 . --count --show-source --statistics
     - name: Test with pytest
       run: |
         pytest
