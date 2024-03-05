@@ -78,6 +78,6 @@ $ uefivars -i efivarfs -o aws -I /sys/firmware/efi/efivars -O uefi-data.aws
 
 This package currently supports the following formats:
 
-**aws** - File format used in [AWS EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/uefi-secure-boot.html)
-**edk2** - File format used for flash storage in [OVMF](https://github.com/tianocore/edk2/blob/918288ab5a7c3abe9c58d576ccc0ae32e2c7dea0/OvmfPkg/README#L123)
+**aws** - File format used in [AWS EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/uefi-secure-boot.html) \
+**edk2** - File format used for flash storage in [OVMF](https://github.com/tianocore/edk2/blob/918288ab5a7c3abe9c58d576ccc0ae32e2c7dea0/OvmfPkg/README#L123) \
 **efivarfs** - Ingests all non-authenticated variables from an [efivarfs](https://docs.kernel.org/filesystems/efivarfs.html) mount point (read only)
