@@ -20,20 +20,19 @@ globalEfiGUID = bytes.fromhex("61 df e4 8b ca 93 d2 11 aa 0d 00 e0 98 03 2b 8c")
 secureDatabaseGUID = bytes.fromhex("cb b2 19 d7 3a 3d 96 45 a3 bc da d0 0e 67 65 6f")
 
 def Str2UEFIVarStore(s):
-    if s == 'aws':
-        return AWSUEFIVarStore
-    elif s == 'edk2':
-        return EDK2UEFIVarStore
-    elif s == 'json':
-        return JSONUEFIVarStore
-    elif s == 'efivarfs':
-        return EFIVARFSUEFIVarStore
-    elif s == 'none':
-        return UEFIVarStore
-    else:
-        raise SystemExit(
-            'Unknown Input type "{}", choose from ("aws, "json", "edk2", "efivarfs", "none")'.format(s)
-        )
+    formats = {
+        "aws": AWSUEFIVarStore,
+        "edk2": EDK2UEFIVarStore,
+        "json": JSONUEFIVarStore,
+        "efivarfs": EFIVARFSUEFIVarStore,
+        "none": UEFIVarStore,
+    }
+
+    if s in formats:
+        return formats[s]
+
+    fmt = '", "'.join(formats)
+    raise SystemExit(f'Unknown Input type "{s}", choose from ("{fmt}")')
 
 def ReadVar(arg, name, guid):
     EFI_VARIABLE_NON_VOLATILE=0x00000001
