@@ -3,14 +3,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT
 
-import base64
 import json
 import uuid
-from .varstore import *
+from .varstore import UEFIVar, UEFIVarStore
+
 
 class JSONVar(UEFIVar):
     def __init__(self, jvar):
-        var = {}
         name = jvar['name']
         data = bytes.fromhex(jvar['data'])
         guid = uuid.UUID(jvar['guid']).bytes_le
@@ -25,6 +24,7 @@ class JSONVar(UEFIVar):
 
     def __dict__(self):
         super().__dict__()
+
 
 class JSONUEFIVarStore(UEFIVarStore):
     current_version = 2
@@ -44,7 +44,8 @@ class JSONUEFIVarStore(UEFIVarStore):
 
         if self.version > self.current_version:
             raise SystemExit(
-                'Unknown Version "{}", this tool only supports up to version "{}"'.format(self.version, self.current_version)
+                'Unknown Version "{}", this tool only supports up to version "{}"'.format(
+                    self.version, self.current_version)
             )
 
         # Copy all JSON elements to the UEFIVars for the store
@@ -60,7 +61,7 @@ class JSONUEFIVarStore(UEFIVarStore):
         new_var = var.__dict__()
 
         if 'guid' in new_var:
-             new_var["guid"] = str(uuid.UUID(bytes_le=var.guid))
+            new_var["guid"] = str(uuid.UUID(bytes_le=var.guid))
 
         for key in new_var:
             if isinstance(new_var[key], bytes):

@@ -4,10 +4,12 @@
 # SPDX-License-Identifier: MIT
 
 import os
-from .varstore import *
+from .varstore import UEFIVar, UEFIVarStore
 import uuid
+import sys
 
 EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS = 0x20
+
 
 class EFIVARFSUEFIVarStore(UEFIVarStore):
     """

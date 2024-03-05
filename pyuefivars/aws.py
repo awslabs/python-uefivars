@@ -3,15 +3,15 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT
 
-import json
 import os
 import zlib
 import base64
 import tempfile
 import google_crc32c as crc32c
-from .varstore import *
-from .aws_v0 import *
-from .aws_file import *
+from .varstore import UEFIVar, UEFIVarStore
+from .aws_v0 import UEFIVarStoreV0
+from .aws_file import AWSVarStoreFile
+
 
 class AWSUEFIVarStore(UEFIVarStore):
     EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS = 0x20
@@ -29,7 +29,7 @@ class AWSUEFIVarStore(UEFIVarStore):
         file = AWSVarStoreFile(file)
         magic = file.read64()
         if magic != self.AMZNUEFI:
-            raise Exception("Invalid magic. Expected AMZNUEFI. Found 0x%x" % magic);
+            raise Exception("Invalid magic. Expected AMZNUEFI. Found 0x%x" % magic)
         crc32 = file.read32()
 
         # Validate crc32c
@@ -41,7 +41,7 @@ class AWSUEFIVarStore(UEFIVarStore):
 
         version = file.read32()
         if version != 0:
-            raise Exception("Invalid version. Expected 0. Found 0x%x" % version);
+            raise Exception("Invalid version. Expected 0. Found 0x%x" % version)
 
         # Grab the zlib data that's embedded and parse it
         dec = zlib.decompressobj(0, zdict=UEFIVarStoreV0.dict)
@@ -78,11 +78,11 @@ class AWSUEFIVarStore(UEFIVarStore):
             raw.write32(var.attr)
             if var.attr & self.EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS:
                 timestamp = var.timestamp
-                if timestamp == None:
+                if timestamp is None:
                     timestamp = self.EMPTY_TIMESTAMP
 
                 digest = var.digest
-                if digest == None:
+                if digest is None:
                     digest = self.EMPTY_DIGEST
 
                 raw.writetimestamp(timestamp)
@@ -97,7 +97,7 @@ class AWSUEFIVarStore(UEFIVarStore):
         f = AWSVarStoreFile(f)
         f.write64(self.AMZNUEFI)
         f.write32(crc32c.value(int(0).to_bytes(4, byteorder='little') + zdata))
-        f.write32(0) # Version 0
+        f.write32(0)  # Version 0
         f.write(zdata)
         f.file.seek(0, os.SEEK_SET)
 

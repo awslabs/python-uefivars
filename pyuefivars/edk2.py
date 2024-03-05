@@ -6,8 +6,9 @@
 import struct
 import tempfile
 import os
-from .aws_file import *
-from .varstore import *
+from .aws_file import AWSVarStoreFile
+from .varstore import UEFIVar, UEFIVarStore
+
 
 class EDK2Cert(object):
     def __init__(self, name: str, guid: bytes, digest: bytes):
@@ -15,12 +16,13 @@ class EDK2Cert(object):
         self.guid = guid
         self.digest = digest
 
+
 class EDK2CertDB(object):
     GUID_CERTDB = b'\x6e\xe5\xbe\xd9\xdc\x75\xd9\x49\xb4\xd7\xb5\x34\x21\x0f\x63\x7a'
 
     def __init__(self, uefivar: UEFIVar = None):
         self.certs = []
-        if uefivar != None:
+        if uefivar is not None:
             self.init_from_var(uefivar)
 
     def init_from_var(self, uefivar: UEFIVar):
@@ -36,6 +38,7 @@ class EDK2CertDB(object):
         while size != 0:
             guid = file.readguid()
             cert_node_size = file.read32()
+            cert_node_size  # Unused, silence F841
             name_size = file.read32() * 2
             digest_size = file.read32()
             name = file.read(name_size).decode('utf-16le').rstrip('\0')
@@ -46,7 +49,7 @@ class EDK2CertDB(object):
     def to_var(self, vars: UEFIVar):
         file = tempfile.SpooledTemporaryFile()
         file = AWSVarStoreFile(file)
-        file.write32(0) # file size, gets patched in later
+        file.write32(0)  # file size, gets patched in later
         pubkeyidx = 0
         for var in vars:
             if not var.digest:
@@ -67,6 +70,7 @@ class EDK2CertDB(object):
         file.file.seek(0, os.SEEK_SET)
         data = file.file.read()
         return UEFIVar("certdb", data, self.GUID_CERTDB, 0x7)
+
 
 class EDK2UEFIVarStore(UEFIVarStore):
     GUID_CERTDB = b'\x6e\xe5\xbe\xd9\xdc\x75\xd9\x49\xb4\xd7\xb5\x34\x21\x0f\x63\x7a'
@@ -184,8 +188,10 @@ class EDK2UEFIVarStore(UEFIVarStore):
             file.read8()
             attr = file.read32()
             monotoniccount = file.read64()
+            monotoniccount  # Unused, silence F841
             timestamp = file.readtimestamp()
             pubkeyidx = file.read32()
+            pubkeyidx  # Unused, silence F841
             namelen = file.read32()
             datalen = file.read32()
             guid = file.readguid()
@@ -207,20 +213,20 @@ class EDK2UEFIVarStore(UEFIVarStore):
                 if var.name == cert.name and var.guid == cert.guid:
                     var.digest = cert.digest
 
-    def csum16(self, var : bytes):
+    def csum16(self, var: bytes):
         u16 = struct.unpack("<" + str(int(len(var) / 2)) + "H", var)
         csum = 0
         for b in u16:
-            #print("0x%x + 0x%x = 0x%x" % (csum, b, csum + b))
+            # print("0x%x + 0x%x = 0x%x" % (csum, b, csum + b))
             csum = csum + b
         return (csum & 0xffff)
 
-    def write_var(self, raw : AWSVarStoreFile, var : UEFIVar):
+    def write_var(self, raw: AWSVarStoreFile, var: UEFIVar):
         raw.write16(0x55aa)
         raw.write8(self.STATE_SETTLED)
         raw.write8(0)
         raw.write32(var.attr)
-        raw.write64(0) # monotonic count
+        raw.write64(0)  # monotonic count
         if var.timestamp:
             raw.write(var.timestamp)
         else:
@@ -242,22 +248,22 @@ class EDK2UEFIVarStore(UEFIVarStore):
         if not hasattr(self, 'length'):
             self.length = self.DEFAULT_LENGTH
         if not hasattr(self, 'attrs'):
-            self.attrs = self.EFI_FVB2_READ_DISABLED_CAP  | \
-                         self.EFI_FVB2_READ_ENABLED_CAP   | \
-                         self.EFI_FVB2_READ_STATUS        | \
-                         self.EFI_FVB2_WRITE_DISABLED_CAP | \
-                         self.EFI_FVB2_WRITE_ENABLED_CAP  | \
-                         self.EFI_FVB2_WRITE_STATUS       | \
-                         self.EFI_FVB2_LOCK_CAP           | \
-                         self.EFI_FVB2_LOCK_STATUS        | \
-                         self.EFI_FVB2_STICKY_WRITE       | \
-                         self.EFI_FVB2_MEMORY_MAPPED      | \
-                         self.EFI_FVB2_ERASE_POLARITY     | \
-                         self.EFI_FVB2_READ_LOCK_CAP      | \
-                         self.EFI_FVB2_READ_LOCK_STATUS   | \
-                         self.EFI_FVB2_WRITE_LOCK_CAP     | \
-                         self.EFI_FVB2_WRITE_LOCK_STATUS  | \
-                         self.EFI_FVB2_ALIGNMENT_16
+            self.attrs = self.EFI_FVB2_READ_DISABLED_CAP | \
+                self.EFI_FVB2_READ_ENABLED_CAP | \
+                self.EFI_FVB2_READ_STATUS | \
+                self.EFI_FVB2_WRITE_DISABLED_CAP | \
+                self.EFI_FVB2_WRITE_ENABLED_CAP | \
+                self.EFI_FVB2_WRITE_STATUS | \
+                self.EFI_FVB2_LOCK_CAP | \
+                self.EFI_FVB2_LOCK_STATUS | \
+                self.EFI_FVB2_STICKY_WRITE | \
+                self.EFI_FVB2_MEMORY_MAPPED | \
+                self.EFI_FVB2_ERASE_POLARITY | \
+                self.EFI_FVB2_READ_LOCK_CAP | \
+                self.EFI_FVB2_READ_LOCK_STATUS | \
+                self.EFI_FVB2_WRITE_LOCK_CAP | \
+                self.EFI_FVB2_WRITE_LOCK_STATUS | \
+                self.EFI_FVB2_ALIGNMENT_16
         if not hasattr(self, 'varsize'):
             self.varsize = int(self.length / 2) - 8264
 
@@ -270,14 +276,15 @@ class EDK2UEFIVarStore(UEFIVarStore):
         raw.write32(self.attrs)
         raw.write16(self.HEADER_LENGTH)
         csum_pos = raw.file.tell()
-        raw.write16(0) # checksum - need to fill in later
+        raw.write16(0)  # checksum - need to fill in later
         raw.write(b'\0' * 3)
-        raw.write8(0x2) # revision
+        raw.write8(0x2)  # revision
         raw.write(b'\x84\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
         raw.write(self.GUID_VARSTORE)
         raw.write32(self.varsize)
         raw.write(self.VARSTORE_STATUS)
         header_end_pos = raw.file.tell()
+        header_end_pos  # Unused, silence F841
 
         self.write_var(raw, self.certdb.to_var(self.vars))
 
@@ -303,7 +310,7 @@ class EDK2UEFIVarStore(UEFIVarStore):
     def set_output_options(self, options):
         for option in [option.strip().split("=") for option in options]:
             if option[0] == 'filesize':
-                if(len(option) != 2 or not option[1]):
+                if (len(option) != 2 or not option[1]):
                     raise SystemExit(
                         'option "filesize" requires a second argument'
                     )

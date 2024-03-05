@@ -5,6 +5,7 @@
 
 import sys
 
+
 class UEFIVar(object):
     def __init__(self, name: str, data: bytes, guid: bytes, attr: int, timestamp: bytes = None, digest: bytes = None):
         self.name = name
@@ -20,12 +21,13 @@ class UEFIVar(object):
         var['data'] = self.data
         var['guid'] = self.guid
         var['attr'] = self.attr
-        if self.timestamp != None:
+        if self.timestamp is not None:
             var['timestamp'] = self.timestamp
-        if self.digest != None:
+        if self.digest is not None:
             var['digest'] = self.digest
 
         return var
+
 
 class UEFIVarStore(object):
     EMPTY_TIMESTAMP = b'\0' * 16

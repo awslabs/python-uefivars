@@ -17,7 +17,7 @@ setuptools.setup(
     long_description=long_description,
     url="https://github.com/awslabs/python-uefivars",
     packages=setuptools.find_packages(),
-    install_requires=[ 'google-crc32c' ],
+    install_requires=['google-crc32c'],
     entry_points={
         'console_scripts': [
             'uefivars.py = pyuefivars:main',

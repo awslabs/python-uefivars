@@ -5,7 +5,7 @@
 
 import argparse
 import sys
-from .varstore import *
+from .varstore import UEFIVar, UEFIVarStore
 from .aws import AWSUEFIVarStore
 from .edk2 import EDK2UEFIVarStore
 from .json import JSONUEFIVarStore
@@ -18,6 +18,7 @@ if sys.version_info < MIN_PYTHON:
 
 globalEfiGUID = bytes.fromhex("61 df e4 8b ca 93 d2 11 aa 0d 00 e0 98 03 2b 8c")
 secureDatabaseGUID = bytes.fromhex("cb b2 19 d7 3a 3d 96 45 a3 bc da d0 0e 67 65 6f")
+
 
 def Str2UEFIVarStore(s):
     formats = {
@@ -34,18 +35,20 @@ def Str2UEFIVarStore(s):
     fmt = '", "'.join(formats)
     raise SystemExit(f'Unknown Input type "{s}", choose from ("{fmt}")')
 
-def ReadVar(arg, name, guid):
-    EFI_VARIABLE_NON_VOLATILE=0x00000001
-    EFI_VARIABLE_BOOTSERVICE_ACCESS=0x00000002
-    EFI_VARIABLE_RUNTIME_ACCESS=0x00000004
-    EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS=0x00000020
 
-    attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
+def ReadVar(arg, name, guid):
+    EFI_VARIABLE_NON_VOLATILE = 0x00000001
+    EFI_VARIABLE_BOOTSERVICE_ACCESS = 0x00000002
+    EFI_VARIABLE_RUNTIME_ACCESS = 0x00000004
+    EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS = 0x00000020
+
+    attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | \
+        EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
 
     varfile = open(arg, "rb")
     vardata = varfile.read()
 
-    if(len(vardata) == 0):
+    if (len(vardata) == 0):
         print('Read empty variable "{}". Aborting'.format(name), file=sys.stderr)
         sys.exit()
 
@@ -125,7 +128,7 @@ def main():
         print('No PK (PlatformKey) was set; SecureBoot will not be enabled without a PK', file=sys.stderr)
 
     if (args.KEK):
-        var =  ReadVar(args.KEK, 'KEK', globalEfiGUID)
+        var = ReadVar(args.KEK, 'KEK', globalEfiGUID)
         if (kek_found != -1):
             print('Replacing KEK', file=sys.stderr)
             varstore.vars[kek_found] = var
