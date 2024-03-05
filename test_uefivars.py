@@ -3,6 +3,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT
 
+from deepdiff import DeepDiff
+import json
 import subprocess
 
 
@@ -38,13 +40,25 @@ def run_convert(input_type: str = None, input_file: str = None,
     return result.stdout
 
 
+def check_json(out: str, check: str):
+    # Order can vary; we only care that contents match
+    out_dict = json.loads(out.decode('utf-8'))
+    check_dict = json.loads(check.decode('utf-8'))
+    assert DeepDiff(out_dict, check_dict, ignore_order=True) == {}
+
+
 def check_convert(input_type: str, input_file: str,
                   output_type: str, check_file: str) -> None:
     out = run_convert(input_type=input_type, input_file=input_file,
                       output_type=output_type)
 
     if check_file:
-        assert out == open(check_file, 'rb').read()
+        check = open(check_file, 'rb').read()
+
+        if output_type == 'json':
+            check_json(out, check)
+        else:
+            assert out == check
 
 # T01: Check basic functionality: Convert between json and efivarfs
 
@@ -76,4 +90,4 @@ def test_t02_aws_to_edk2_json_aws_json():
     aws = run_convert(input_type='json', input_data=json, output_type='aws')
     json = run_convert(input_type='aws', input_data=aws, output_type='json')
 
-    assert json == open('testdata/t02.json', 'rb').read()
+    check_json(json, open('testdata/t02.json', 'rb').read())
