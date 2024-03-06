@@ -79,7 +79,6 @@ class EDK2UEFIVarStore(UEFIVarStore):
     STATE_SETTLED = 0x3f
     VARSTORE_STATUS = b'\x5a\xfe\x00\x00\x00\x00\x00\x00'
     DEFAULT_LENGTH = 540672
-    HEADER_LENGTH = 0x48
     EFI_FVB2_READ_DISABLED_CAP  = 0x00000001
     EFI_FVB2_READ_ENABLED_CAP   = 0x00000002
     EFI_FVB2_READ_STATUS        = 0x00000004
@@ -129,6 +128,8 @@ class EDK2UEFIVarStore(UEFIVarStore):
     EFI_FVB2_ALIGNMENT_512M     = 0x001D0000
     EFI_FVB2_ALIGNMENT_1G       = 0x001E0000
     EFI_FVB2_ALIGNMENT_2G       = 0x001F0000
+    AAVMF_BLOCK_SIZE            = 0x00040000
+    OVMF_BLOCK_SIZE             = 0x00001000
 
     def __init__(self, data):
         super().__init__()
@@ -141,7 +142,7 @@ class EDK2UEFIVarStore(UEFIVarStore):
         file.seek(0, os.SEEK_SET)
         file = AWSVarStoreFile(file)
 
-        # Validate header
+        # Parse FV header
         zerovector = file.read(0x10)
         if zerovector != b'\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0':
             raise Exception("Invalid Zero Vector: %s" % zerovector)
@@ -159,20 +160,43 @@ class EDK2UEFIVarStore(UEFIVarStore):
             raise Exception('Invalid FVH signature: %s' % sig)
 
         self.attrs = file.read32()
-
         hlength = file.read16()
-        if hlength != self.HEADER_LENGTH:
-            raise Exception('Invalid FVH Header Length: 0x%x' % hlength)
-
         csum_hdr = file.read16()
-        if (self.csum16(data[:self.HEADER_LENGTH]) != 0):
+        if (self.csum16(data[:hlength]) != 0):
             raise Exception("Invalid header checksum: 0x%x" % csum_hdr)
-        file.read(3)
+
+        # Ensure there isn't an extension header we don't understand
+        ext_hdr_offset = file.read16()
+        if ext_hdr_offset != 0:
+            raise Exception('FVH with extension header not supported')
+
+        # Reserved field (should always be 0)
+        reserved = file.read8()
+        if reserved != 0:
+            raise Exception('Wrong value for FVH.Reserved: %s' % reserved)
+
+        # Read revision
         rev = file.read8()
         if rev != 0x2:
             raise Exception('Invalid FVH Revision: 0x%x' % rev)
 
-        file.read(0x10)
+        # Read blockmap
+        self.blockmap = []
+        total_bytes = 0
+        while True:
+            block_cnt, block_bytes = file.read32(), file.read32()
+            if block_cnt == 0 and block_bytes == 0:
+                break
+            self.blockmap.append((block_cnt, block_bytes))
+            total_bytes += block_cnt * block_bytes
+        if self.length != total_bytes:
+            raise Exception('Invalid blockmap: %s' % self.blockmap)
+
+        # Verify header length (ext headers not supported so must match current pos)
+        if hlength != file.file.tell():
+            raise Exception('Invalid header length: %s' % hlength)
+
+        # Parse varstore header
         vsguid = file.readguid()
         if vsguid != self.GUID_VARSTORE:
             raise Exception('Invalid Varstore GUID: %s' % vsguid)
@@ -266,43 +290,67 @@ class EDK2UEFIVarStore(UEFIVarStore):
                 self.EFI_FVB2_ALIGNMENT_16
         if not hasattr(self, 'varsize'):
             self.varsize = int(self.length / 2) - 8264
+        if not hasattr(self, 'blockmap'):
+            # What is a sensible default here? Examples:
+            # - AAVMF uses 256K blocks (virtual NOR)
+            # - OVMF uses 4K blocks (page size)
+            self.blockmap = [(self.length // self.OVMF_BLOCK_SIZE, self.OVMF_BLOCK_SIZE)]
 
         # Assemble the flash file
         raw = AWSVarStoreFile(tempfile.SpooledTemporaryFile())
+
+        # Write FV header
         raw.write(b'\0' * 16)
         raw.write(self.GUID_NVFS)
         raw.write64(self.length)
         raw.write(b'_FVH')
         raw.write32(self.attrs)
-        raw.write16(self.HEADER_LENGTH)
+        # Leave room for header length
+        hlength_pos = raw.file.tell()
+        raw.write16(0)
+        # Skip checksum - need to fill in later
         csum_pos = raw.file.tell()
-        raw.write16(0)  # checksum - need to fill in later
+        raw.write16(0)
+        # No ext header offset + set reversed byte to 0
         raw.write(b'\0' * 3)
-        raw.write8(0x2)  # revision
-        raw.write(b'\x84\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+        # Revision
+        raw.write8(0x2)
+        # Blockmap
+        for block_cnt, block_bytes in self.blockmap:
+            raw.write32(block_cnt)
+            raw.write32(block_bytes)
+        raw.write32(0)
+        raw.write32(0)
+        # Write header length
+        hlength = raw.file.tell()
+        raw.file.seek(hlength_pos, os.SEEK_SET)
+        raw.write16(hlength)
+        # Checksum
+        raw.file.seek(0, os.SEEK_SET)
+        fvh = raw.file.read(hlength)
+        raw.file.seek(csum_pos, os.SEEK_SET)
+        raw.write16((0x10000 - self.csum16(fvh) & 0xffff))
+        # Go to end of FV header
+        raw.file.seek(hlength, os.SEEK_SET)
+
+        # Write varstore header
         raw.write(self.GUID_VARSTORE)
         raw.write32(self.varsize)
         raw.write(self.VARSTORE_STATUS)
-        header_end_pos = raw.file.tell()
-        header_end_pos  # Unused, silence F841
 
+        # Write variables
         self.write_var(raw, self.certdb.to_var(self.vars))
 
         for var in self.vars:
             self.write_var(raw, var)
 
+        # Make sure it all fits
         if raw.file.tell() > self.length:
             raise Exception("Can not fit variables into store")
 
         # Expand to maximum file size
         raw.file.seek(self.length - 1, os.SEEK_SET)
         raw.write8(0)
-
-        # Calculate checksums
-        raw.file.seek(0, os.SEEK_SET)
-        full = raw.file.read()
-        raw.file.seek(csum_pos, os.SEEK_SET)
-        raw.write16((0x10000 - self.csum16(full[:self.HEADER_LENGTH])) & 0xffff)
 
         raw.file.seek(0, os.SEEK_SET)
         return raw.file.read()
