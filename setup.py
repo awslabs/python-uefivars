@@ -10,7 +10,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="uefivars",
-    version="0.1",
+    version="1.1",
     author="Amazon Web Services",
     author_email="graf@amazon.com",
     description="UEFI variable store tools",
