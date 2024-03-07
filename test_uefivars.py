@@ -11,7 +11,7 @@ import subprocess
 def run_uefivars(input_type: str = None, input_file: str = None,
                  output_type: str = None, output_file: str = None,
                  extra_args: list = None, input_data: str = None):
-    args = ['./uefivars.py']
+    args = ['./uefivars']
     if input_type:
         args += ['-i', input_type]
     if input_file:
