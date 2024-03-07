@@ -10,7 +10,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="uefivars",
-    version="1.1",
+    version="1.2",
     author="Amazon Web Services",
     author_email="graf@amazon.com",
     description="UEFI variable store tools",
@@ -21,7 +21,7 @@ setuptools.setup(
     install_requires=['google-crc32c', 'deepdiff'],
     entry_points={
         'console_scripts': [
-            'uefivars.py = pyuefivars:main',
+            'uefivars = pyuefivars:main',
         ],
     },
     classifiers=[
