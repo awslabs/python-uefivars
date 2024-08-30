@@ -15,6 +15,6 @@ parts:
 
 apps:
   uefivars:
-    command: bin/uefivars.py
+    command: bin/uefivars
     plugs:
       - home
