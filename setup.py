@@ -18,7 +18,10 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     url="https://github.com/awslabs/python-uefivars",
     packages=setuptools.find_packages(),
-    install_requires=['google-crc32c', 'deepdiff'],
+    install_requires=['google-crc32c'],
+    extras_require={
+        'test': ['deepdiff'],
+    },
     entry_points={
         'console_scripts': [
             'uefivars = pyuefivars:main',
